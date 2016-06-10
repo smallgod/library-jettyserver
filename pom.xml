@@ -82,6 +82,26 @@
     <version>9.3.7.v20160115</version>
 </dependency>
 
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlet</artifactId>
+            <version>9.3.7.v20160115</version>
+            <type>jar</type>
+        </dependency>
+    
+            <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-jndi</artifactId>
+            <version>9.3.7.v20160115</version>
+            <type>jar</type>
+        </dependency>
+        
+        <!-- http://mvnrepository.com/artifact/org.eclipse.jetty/jetty-util -->
+<dependency>
+    <groupId>org.eclipse.jetty</groupId>
+    <artifactId>jetty-util</artifactId>
+    <version>9.3.7.v20160115</version>
+</dependency>
 
     
        <!-- <dependency>

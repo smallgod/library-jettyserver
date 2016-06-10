@@ -54,6 +54,7 @@ public class CustomJettyServer {
     public CustomJettyServer(String webDescriptor, String resourceBase, String contextPath, String webAppWarFile, int defaultHttpPort, Logger logger) {
 
         logging = new Logging(logger);
+
         jettyServer = new Server();
 
         this.webDescriptor = webDescriptor;
@@ -93,14 +94,13 @@ public class CustomJettyServer {
     }
 
     public void addHTTPConfigs(
-            
             int OUTPUT_BUFFER_SIZE,
             int REQUEST_HEADER_SIZE,
             int RESPONSE_HEADER_SIZE,
             boolean isSendServerVersion,
             boolean isSendDateHeader
     ) {
-        
+
         defaultHTTPConfig = serverConnectorFactory.createHTTPConfigs(jettyServer, defaultHTTPConfig, OUTPUT_BUFFER_SIZE, REQUEST_HEADER_SIZE, RESPONSE_HEADER_SIZE, isSendServerVersion, isSendDateHeader);
 
     }
@@ -113,12 +113,12 @@ public class CustomJettyServer {
     }
 
     private void addDefaultConnector(final int HTTP_PORT) {
-        
+
         addHttpConnector(HTTP_PORT);
     }
 
     public void addHttpConnector(final int HTTP_PORT) {
-        
+
         Connector httpConnector = serverConnectorFactory.createHttpConnector(jettyServer, defaultHTTPConfig, HTTP_PORT);
         jettyServer.addConnector(httpConnector);
     }
@@ -136,7 +136,7 @@ public class CustomJettyServer {
     }
 
     public void addAdminConnector(final int ADMIN_PORT) {
-        
+
         Connector adminConnector = serverConnectorFactory.createAdminConnector(jettyServer, defaultHTTPConfig, ADMIN_PORT);
         jettyServer.addConnector(adminConnector);
     }
