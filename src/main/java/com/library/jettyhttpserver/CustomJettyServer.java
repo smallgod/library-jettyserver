@@ -257,6 +257,7 @@ public class CustomJettyServer {
 
             jettyServer.start();
             jettyServer.dumpStdErr();
+            //jettyServer.join(); //think of putting this inside an executor so that it doesn't hang
 
             if (jettyServer.isStarted()) {
 
