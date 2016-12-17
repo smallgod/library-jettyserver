@@ -5,7 +5,8 @@
  */
 package com.library.jettyhttpserver;
 
-import com.library.jettyhttpserver.utilities.Logging;
+import com.library.configs.JettyServerConfig;
+import com.library.utilities.LoggerUtil;
 import java.io.FileNotFoundException;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -13,9 +14,7 @@ import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.webapp.Configuration;
-import org.slf4j.Logger;
 
 /**
  *
@@ -23,14 +22,15 @@ import org.slf4j.Logger;
  */
 public class CustomJettyServer {
 
+    private final JettyServerConfig serverConfig;
     private HttpConfiguration defaultHTTPConfig;
-    private final String webDescriptor;
-    private final String resourceBase;
-    private final String contextPath;
-    private final String webAppWarFile;
-    private int defaultHttpPort;
-    private final Logging logging;
-    private Server jettyServer;
+    //private final String webDescriptor;
+    //private final String resourceBase;
+    //private final String contextPath;
+    //private String webAppWarFile;
+    //private final int defaultHttpPort;
+    private final LoggerUtil logger = new LoggerUtil(CustomJettyServer.class);;
+    private final Server jettyServer;
     //PUT IN CONFIGS FILE
     //public static final String JETTY_HOME = System.getProperty("jetty.home", "..");
 
@@ -51,21 +51,15 @@ public class CustomJettyServer {
 //    public CustomJettyServer(ThreadPool tp) {
 //        super(tp);
 //    }
-    public CustomJettyServer(String webDescriptor, String resourceBase, String contextPath, String webAppWarFile, int defaultHttpPort, Logger logger) {
+    public CustomJettyServer(JettyServerConfig serverConfig) {
 
-        logging = new Logging(logger);
+        this.serverConfig = serverConfig;
 
         jettyServer = new Server();
 
-        this.webDescriptor = webDescriptor;
-        this.resourceBase = resourceBase;
-        this.contextPath = contextPath;
-        this.webAppWarFile = webAppWarFile;
-        this.defaultHttpPort = defaultHttpPort;
-
         defaultHTTPConfig = new HttpConfiguration();
-        serverConnectorFactory = new ServerConnectorFactory(logging);
-        serverHandlerFactory = new ServerHandlerFactory(logging);
+        serverConnectorFactory = new ServerConnectorFactory();
+        serverHandlerFactory = new ServerHandlerFactory();
 
     }
 
@@ -76,12 +70,12 @@ public class CustomJettyServer {
         // Server localServer = (Server)configuration.configure();
         // Enable parsing of jndi-related parts of web.xml and jetty-env.xml
         Configuration.ClassList classlist = Configuration.ClassList.setServerDefault(jettyServer);
-        logging.debug("Class list size   :: " + classlist.size());
+        logger.debug("Class list size   :: " + classlist.size());
         // classlist.addAfter("org.eclipse.jetty.webapp.FragmentConfiguration", "org.eclipse.jetty.plus.webapp.EnvConfiguration", "org.eclipse.jetty.plus.webapp.PlusConfiguration");
-        logging.debug("Class list members:: " + classlist.get(0) + " " + classlist.get(1) + " " + classlist.get(2) + " " + classlist.get(3) + " " + classlist.get(4));
+        logger.debug("Class list members:: " + classlist.get(0) + " " + classlist.get(1) + " " + classlist.get(2) + " " + classlist.get(3) + " " + classlist.get(4));
 
         //add only default configs that will enable calling this.start();
-        this.addDefaultConnector(defaultHttpPort);
+        this.addDefaultConnector(serverConfig.getHttpPort());
         this.addDefaultHandler();
         //Connector defaultConnector = serverConnectorFactory.createHttpConnector(jettyServer, defaultHTTPConfig, defaultHttpPort);
         //Handler addWebAppContextHandler = serverHandlerFactory.createWebAppContextHandler(contextPath, resourceBase, webDescriptor);
@@ -93,7 +87,8 @@ public class CustomJettyServer {
         //set handlers
     }
 
-    public void addHTTPConfigs(
+    
+    public void addHttpConfigs(
             int OUTPUT_BUFFER_SIZE,
             int REQUEST_HEADER_SIZE,
             int RESPONSE_HEADER_SIZE,
@@ -146,7 +141,7 @@ public class CustomJettyServer {
      *
      */
     public void addWebAppContextHandler() {
-        Handler webAppContextHandler = serverHandlerFactory.createWebAppContextHandler(contextPath, resourceBase, webDescriptor);
+        Handler webAppContextHandler = serverHandlerFactory.createWebAppContextHandler(serverConfig.getContextPath(), serverConfig.getResourceBase(), serverConfig.getWebDescriptor());
         jettyServer.setHandler(webAppContextHandler);
     }
 
@@ -166,7 +161,7 @@ public class CustomJettyServer {
      * @param isDirectoriesListed
      */
     public void addResourceHandler(String[] welcomeFiles, Boolean isDirectoriesListed) {
-        Handler resourceHandler = serverHandlerFactory.createResourceHandler(welcomeFiles, resourceBase, isDirectoriesListed);
+        Handler resourceHandler = serverHandlerFactory.createResourceHandler(welcomeFiles, serverConfig.getResourceBase(), isDirectoriesListed);
         jettyServer.setHandler(resourceHandler);
     }
 
@@ -182,7 +177,7 @@ public class CustomJettyServer {
      * @param welcomeFiles
      */
     public void addContextHandler(String[] welcomeFiles) {
-        Handler contextHandler = serverHandlerFactory.createContextHandler(welcomeFiles, resourceBase, contextPath);
+        Handler contextHandler = serverHandlerFactory.createContextHandler(welcomeFiles, serverConfig.getResourceBase(), serverConfig.getContextPath());
         jettyServer.setHandler(contextHandler);
     }
 
@@ -193,7 +188,7 @@ public class CustomJettyServer {
      * @param welcomeFiles
      */
     public void getServletContextHandler(String[] welcomeFiles) {
-        Handler servletHander = serverHandlerFactory.createServletContextHandler(welcomeFiles, resourceBase, contextPath);
+        Handler servletHander = serverHandlerFactory.createServletContextHandler(welcomeFiles, serverConfig.getResourceBase(), serverConfig.getContextPath());
         jettyServer.setHandler(servletHander);
     }
 
@@ -261,15 +256,15 @@ public class CustomJettyServer {
 
             if (jettyServer.isStarted()) {
 
-                logging.info("Yoyoyoyoo!!! Jetty server is started na bidi");
+                logger.info("Yoyoyoyoo!!! Jetty server is started na bidi");
                 isStarted = Boolean.TRUE;
 
             } else {
-                logging.info("Couldn't start server despite a non-conflicting state: " + jettyServer.getState());
+                logger.info("Couldn't start server despite a non-conflicting state: " + jettyServer.getState());
             }
 
         } else {
-            logging.warn("Can't start server - state: " + jettyServer.getState());
+            logger.warn("Can't start server - state: " + jettyServer.getState());
         }
 
         return isStarted;
@@ -289,10 +284,41 @@ public class CustomJettyServer {
         jettyServer.stop();
 
         if (jettyServer.isStopped() || jettyServer.isStopping()) {
-            logging.info("Jetty server successful stopped or is stopping.. - " + jettyServer.getState());
+            logger.info("Jetty server successful stopped or is stopping.. - " + jettyServer.getState());
             isStopped = Boolean.TRUE;
         }
 
         return isStopped;
     }
+
+    /**
+     * Method needs to be called first before the start method 
+     * 
+     * @throws FileNotFoundException
+     * @throws Exception 
+     */
+    public void initialiseServer() throws FileNotFoundException, Exception {
+
+        logger.info("Initialising Jetty Server..");
+        
+        //add other httpConfigs
+        //HttpConfiguration httpConfig = jettyServer.addHttpConfigs(OUTPUT_BUFFER_SIZE, REQUEST_HEADER_SIZE, RESPONSE_HEADER_SIZE, Boolean.TRUE, Boolean.TRUE);
+        addHttpConfigs(serverConfig.getOutputBufferSize(), serverConfig.getRequestHeaderSize(), serverConfig.getResponseHeaderSize(), Boolean.TRUE, Boolean.TRUE);
+
+        //connectors        
+        //addHttpsConnector(HTTPS_PORT, KEYSTORE_PATH, KEYSTORE_PASS, KEYSTORE_MGR_PASS);
+        //addAdminConnector(ADMIN_PORT);
+        //Connector httpConnector = addHttpConnector(httpConfig, HTTP_PORT);
+        addHttpConnector(serverConfig.getHttpPort());
+
+        //handlers
+        //addResourceHandler(WELCOME_FILES, Boolean.TRUE);
+        //addContextHandler(WELCOME_FILES);
+        //getServletContextHandler(WELCOME_FILES);
+        addWebAppContextHandler();
+
+        //addConnector(httpConnector);
+        //addHandler(webAppContextHandler);
+    }
+
 }

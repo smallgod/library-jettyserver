@@ -5,16 +5,23 @@
  */
 package com.library.jettyhttpserver;
 
-import com.library.jettyhttpserver.utilities.Logging;
-import org.eclipse.jetty.plus.webapp.EnvConfiguration;
-import org.eclipse.jetty.plus.webapp.PlusConfiguration;
+import com.library.utilities.LoggerUtil;
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.Servlet;
+import org.eclipse.jetty.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.plus.webapp.EnvConfiguration;
+import org.eclipse.jetty.plus.webapp.PlusConfiguration;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.Configuration;
 import org.eclipse.jetty.webapp.FragmentConfiguration;
+import org.eclipse.jetty.webapp.JettyWebXmlConfiguration;
+import org.eclipse.jetty.webapp.MetaInfConfiguration;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.webapp.WebInfConfiguration;
 import org.eclipse.jetty.webapp.WebXmlConfiguration;
 
 /**
@@ -22,11 +29,11 @@ import org.eclipse.jetty.webapp.WebXmlConfiguration;
  * @author smallgod
  */
 public class ServerHandlerFactory {
-    
-    private final Logging logging;
 
-    protected ServerHandlerFactory(Logging logging) {
-        this.logging = logging;
+    private final LoggerUtil logger;
+
+    protected ServerHandlerFactory() {
+        this.logger = new LoggerUtil(ServerHandlerFactory.class);
     }
 
     protected Handler createWebAppContextHandler(String contextPath, String resourceBase, String webDescriptor) {
@@ -35,20 +42,30 @@ public class ServerHandlerFactory {
 
         webAppHandler.setContextPath(contextPath);
 
-        // webAppHandler.setWar(ApplicationPropertyLoader.loadInstance().getJarFolderName() + "/src/main/recontool/war/recontool.war");
+        // webAppHandler.setWar(ApplicationPropertyLoader.getInstance().getJarFolderName() + "/src/main/recontool/war/recontool.war");
         // webAppHandler.setResourceBase("/home/smallgod/NetBeansProjects/recontool/src/main/recontool/"); //get app dir variable location
         // webAppHandler.setDescriptor("/home/smallgod/NetBeansProjects/src/main/recontool/WEB-INF/web.xml");
-        // webAppHandler.setResourceBase(ApplicationPropertyLoader.loadInstance().getJarFolderName() + "/src/main/recontool/"); //get app dir variable location
+        // webAppHandler.setResourceBase(ApplicationPropertyLoader.getInstance().getJarFolderName() + "/src/main/recontool/"); //get app dir variable location
         webAppHandler.setResourceBase(resourceBase); //get app dir variable location
         webAppHandler.setDescriptor(webDescriptor);
 
-        // webAppHandler.setDefaultDescriptor(ApplicationPropertyLoader.loadInstance().getJarFolderName() + "/src/main/recontool/webdefault/webdefault.xml"); //copy from The location is JETTY_HOME/etc/webdefault.xml     
+        webAppHandler.setConfigurations(new Configuration[]{
+            new AnnotationConfiguration(),
+            new WebXmlConfiguration(),
+            new WebInfConfiguration(),
+            new PlusConfiguration(),
+            new MetaInfConfiguration(),
+            new FragmentConfiguration(),
+            new JettyWebXmlConfiguration(),
+            new EnvConfiguration()});
+
+        // webAppHandler.setDefaultDescriptor(ApplicationPropertyLoader.getInstance().getJarFolderName() + "/src/main/recontool/webdefault/webdefault.xml"); //copy from The location is JETTY_HOME/etc/webdefault.xml     
         webAppHandler.setParentLoaderPriority(true);//make the ClassLoader behavior more akin to standard Java (as opposed to the reverse requirements for Servlets)
 
         // Configuration configs[] = new Configuration[]{new FragmentConfiguration(), new PlusConfiguration(), new EnvConfiguration() };
         // context.setConfigurations(configs);
-        logging.debug("Resource base: " + webAppHandler.getBaseResource());
-        logging.debug("Context path : " + webAppHandler.getContextPath());
+        logger.debug("Resource base: " + webAppHandler.getBaseResource());
+        logger.debug("Context path : " + webAppHandler.getContextPath());
 
         return webAppHandler;
     }
@@ -86,14 +103,14 @@ public class ServerHandlerFactory {
      * @param contextPath
      * @return
      */
-   protected Handler createContextHandler(String[] welcomeFiles, String resourceBase, String contextPath) {
+    protected Handler createContextHandler(String[] welcomeFiles, String resourceBase, String contextPath) {
 
         ContextHandler contextHandler = new ContextHandler();
         contextHandler.setWelcomeFiles(welcomeFiles);
         contextHandler.setContextPath(contextPath);
         contextHandler.setResourceBase(resourceBase);
         contextHandler.setClassLoader(Thread.currentThread().getContextClassLoader());
-        
+
         return contextHandler;
     }
 
@@ -112,9 +129,42 @@ public class ServerHandlerFactory {
         servletHandler.setContextPath(contextPath);
         servletHandler.setResourceBase(resourceBase);
         servletHandler.setWelcomeFiles(welcomeFiles);
+        
         //servletHandler.addServlet(new ServletHolder(new HelloServlet()), "/*");
         //servletHandler.addServlet(new ServletHolder(new HelloServlet("Buongiorno Mondo")), "/it/*");
         //servletHandler.addServlet(new ServletHolder(new HelloServlet("Bonjour le Monde")), "/fr/*");
+        
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        context.setContextPath("/");
+
+        return servletHandler;
+    }
+    
+    /**
+     * 
+     * @param welcomeFiles
+     * @param resourceBase
+     * @param contextPath
+     * @param multipartServlet
+     * @param tempFolder
+     * @return 
+     */
+    protected Handler createMultipartServletContextHandler(String[] welcomeFiles, String resourceBase, String contextPath, Servlet multipartServlet, String tempFolder) {
+
+        ServletContextHandler servletHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        servletHandler.setContextPath(contextPath);
+        servletHandler.setResourceBase(resourceBase);
+        servletHandler.setWelcomeFiles(welcomeFiles);
+        
+        //servletHandler.addServlet(new ServletHolder(new HelloServlet()), "/*");
+        //servletHandler.addServlet(new ServletHolder(new HelloServlet("Buongiorno Mondo")), "/it/*");
+        //servletHandler.addServlet(new ServletHolder(new HelloServlet("Bonjour le Monde")), "/fr/*");
+        
+
+        ServletHolder fileUploadServletHolder = new ServletHolder(multipartServlet);
+        fileUploadServletHolder.getRegistration().setMultipartConfig(new MultipartConfigElement(tempFolder));
+        
+        servletHandler.addServlet(fileUploadServletHolder, "/uploadfile");
 
         return servletHandler;
     }

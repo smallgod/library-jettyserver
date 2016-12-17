@@ -5,7 +5,7 @@
  */
 package com.library.jettyhttpserver;
 
-import com.library.jettyhttpserver.utilities.Logging;
+import com.library.utilities.LoggerUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import org.eclipse.jetty.http.HttpVersion;
@@ -38,10 +38,10 @@ public class ServerConnectorFactory {
     public static final String KEYSTORE_PASS = "OBF:1vny1zlo1x8e1vnw1vn61x8g1zlu1vn4";
     public static final String KEYSTORE_MGR_PASS = "OBF:1u2u1wml1z7s1z7a1wnl1u2g";
     
-    private final Logging logging;
+    private final LoggerUtil logger;
 
-    protected ServerConnectorFactory(Logging logging) {
-        this.logging = logging;
+    protected ServerConnectorFactory(){
+        this.logger = new LoggerUtil(ServerConnectorFactory.class);
     }
 
 
