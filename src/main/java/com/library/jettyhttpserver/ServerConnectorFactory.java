@@ -5,7 +5,7 @@
  */
 package com.library.jettyhttpserver;
 
-import com.library.utilities.LoggerUtil;
+import com.library.sglogger.util.LoggerUtil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import org.eclipse.jetty.http.HttpVersion;

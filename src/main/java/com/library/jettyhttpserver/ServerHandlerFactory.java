@@ -5,7 +5,7 @@
  */
 package com.library.jettyhttpserver;
 
-import com.library.utilities.LoggerUtil;
+import com.library.sglogger.util.LoggerUtil;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.MultipartConfigElement;
